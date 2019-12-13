@@ -23,9 +23,10 @@ def create_sample_recipe(name='Sample recipe', description='Sample description')
     )
 
 
-def create_sample_ingredient(name='Sample ingredient'):
-    """Create a sample ingredient"""
-    return Ingredient.objects.create(name=name)
+def add_sample_ingredient(recipe, name='Sample ingredient'):
+    """Create a sample ingredient and add it to the recipe"""
+    ingredient = Ingredient.objects.create(recipe=recipe, name=name)
+    recipe.ingredients.add(ingredient)
 
 
 class RecipeApiTests(APITestCase):
@@ -56,14 +57,13 @@ class RecipeApiTests(APITestCase):
             'description': 'This is a description',
             'ingredients': []
         }
-        res = self.client.post(RECIPES_URL, json.dumps(payload),
-                               content_type='application/json')
+        res = self.client.post(RECIPES_URL, payload, format='json')
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
 
         # Verify the recipe was created correctly
         recipe = Recipe.objects.get(id=res.data['id'])
-        self.assertEqual(payload['name'], getattr(recipe, 'name'))
-        self.assertEqual(payload['description'], getattr(recipe, 'description'))
+        self.assertEqual(payload['name'], recipe.name)
+        self.assertEqual(payload['description'], recipe.description)
 
     def test_create_recipe_with_ingredients(self):
         """"Test that we can create (POST) a recipe with ingredients"""
@@ -77,14 +77,13 @@ class RecipeApiTests(APITestCase):
                 {'name': 'Lettuce'}
             ]
         }
-        res = self.client.post(RECIPES_URL, json.dumps(payload),
-                               content_type='application/json')
+        res = self.client.post(RECIPES_URL, payload, format='json')
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
 
         # Verify the recipe was created correctly
         recipe = Recipe.objects.get(id=res.data['id'])
-        self.assertEqual(payload['name'], getattr(recipe, 'name'))
-        self.assertEqual(payload['description'], getattr(recipe, 'description'))
+        self.assertEqual(payload['name'], recipe.name)
+        self.assertEqual(payload['description'], recipe.description)
         # Verify the ingredients were created correctly
         self.assertEqual(len(recipe.ingredients.all()), 3)
         for ingredient in res.data['ingredients']:
@@ -94,7 +93,7 @@ class RecipeApiTests(APITestCase):
         """Test that we can partially edit (PATCH) a recipe, without altering ingredients"""
         # Create a recipe
         recipe = create_sample_recipe()
-        recipe.ingredients.add(create_sample_ingredient())
+        add_sample_ingredient(recipe)
 
         # Update the recipe calling the API
         payload = {'name': 'Cucumber salad'}
@@ -113,7 +112,7 @@ class RecipeApiTests(APITestCase):
         """Test that we can partially edit (PATCH) a recipe, altering ingredients"""
         # Create a recipe
         recipe = create_sample_recipe()
-        recipe.ingredients.add(create_sample_ingredient())
+        add_sample_ingredient(recipe)
 
         # Update the recipe calling the API
         payload = {
@@ -140,18 +139,16 @@ class RecipeApiTests(APITestCase):
         """Test that we can fully edit (PUT) a recipe"""
         # Create a recipe with one ingredient
         recipe = create_sample_recipe()
-        recipe.ingredients.add(create_sample_ingredient())
+        add_sample_ingredient(recipe)
 
         # Update the recipe calling the API
         payload = {
-            #'id': recipe.id, # why do I have to put the ID here if it is in the URL?
             'name': 'Cucumber salad',
             'description': 'Cut all the cucumbers first',
             'ingredients': []
         }
         url = detail_url(recipe.id)
-        res = self.client.put(url, json.dumps(payload),
-                               content_type='application/json')
+        res = self.client.put(url, payload, format='json')
         self.assertEqual(res.status_code, status.HTTP_200_OK)
 
         # Refresh the recipe object from DB

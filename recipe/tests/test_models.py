@@ -7,8 +7,10 @@ class ModelTests(TestCase):
     def test_ingredient_str(self):
         """Test the ingredient string representation"""
 
+        recipe = Recipe.objects.create(name='Any recipe')
         # Create a sample ingredient
         ingredient = Ingredient.objects.create(
+            recipe=recipe,
             name='Sample ingredient'
         )
 

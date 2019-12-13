@@ -4,7 +4,7 @@ from django.db import models
 class Ingredient(models.Model):
     """Ingredient to be used in recipes"""
     name = models.CharField(max_length=255)
-    recipe = models.ForeignKey('Recipe', on_delete=models.CASCADE, null=True, blank=True,
+    recipe = models.ForeignKey('Recipe', on_delete=models.CASCADE,
                                related_name='ingredients')
 
     def __str__(self):
