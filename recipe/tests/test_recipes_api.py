@@ -98,7 +98,7 @@ class RecipeApiTests(APITestCase):
         # Update the recipe calling the API
         payload = {'name': 'Cucumber salad'}
         url = detail_url(recipe.id)
-        res = self.client.patch(url, payload)
+        res = self.client.patch(url, payload, format='json')
         self.assertEqual(res.status_code, status.HTTP_200_OK)
 
         # Refresh the recipe object from DB
@@ -122,7 +122,7 @@ class RecipeApiTests(APITestCase):
             ]
         }
         url = detail_url(recipe.id)
-        res = self.client.patch(url, payload)
+        res = self.client.patch(url, payload, format='json')
         self.assertEqual(res.status_code, status.HTTP_200_OK)
 
         # Refresh the recipe object from DB
@@ -131,9 +131,8 @@ class RecipeApiTests(APITestCase):
         # Verify the recipe's name and ingredients were updated
         self.assertEqual(recipe.name, payload['name'])
         self.assertEqual(len(recipe.ingredients.all()), 1)
-        self.assertTrue(Ingredient.objects.filter(
-            name=res.data['ingredients'][0]['name']
-        ).exists())
+        self.assertEqual(res.data['ingredients'][0]['name'],
+                         payload['ingredients'][0]['name'])
 
     def test_edit_recipe_full(self):
         """Test that we can fully edit (PUT) a recipe"""
